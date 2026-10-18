@@ -1,0 +1,78 @@
+@baseUrl = http://localhost:8080
+
+### 0. Работает ли API? Доступ без X-User разрешен только для health.
+GET {{baseUrl}}/health
+
+### 1. Список alice: обращения 1 и 3.
+GET {{baseUrl}}/issues
+X-User: alice
+
+### 2. Собственное обращение alice.
+GET {{baseUrl}}/issues/1
+X-User: alice
+
+### 3. Проверяем, что обращение bob существует.
+GET {{baseUrl}}/issues/2
+X-User: bob
+
+### 4. Тот же объект под alice: сравните с запросом 3.
+GET {{baseUrl}}/issues/2
+X-User: alice
+
+### 5. Исполнитель своего подразделения читает обращение bob.
+GET {{baseUrl}}/issues/2
+X-User: carol
+
+### 6. Исполнитель другого подразделения читает то же обращение.
+GET {{baseUrl}}/issues/2
+X-User: dave
+
+### 7. До закрытия: запомните status. Перезапуск API возвращает open.
+GET {{baseUrl}}/issues/1
+X-User: alice
+
+### 8. Заявитель пробует закрыть свое обращение.
+POST {{baseUrl}}/issues/1/close
+X-User: alice
+
+### 9. После попытки: сравните status с запросом 7.
+GET {{baseUrl}}/issues/1
+X-User: alice
+
+### 10. Исполнитель другого подразделения пробует закрыть обращение bob.
+POST {{baseUrl}}/issues/2/close
+X-User: dave
+
+### 11. Правомочный пользователь проверяет результат предыдущей попытки.
+GET {{baseUrl}}/issues/2
+X-User: carol
+
+### 12. Разрешенное закрытие. Меняет состояние; перед повторением перезапустите API.
+POST {{baseUrl}}/issues/1/close
+X-User: carol
+
+### 13. Правомочный пользователь проверяет, что обращение закрыто.
+GET {{baseUrl}}/issues/1
+X-User: carol
+
+### 14. Собственное вложение alice — штатная проверка.
+GET {{baseUrl}}/attachments/10
+X-User: alice
+
+### 15. Место для самостоятельного запроса к вложению другого пользователя.
+# Добавьте метод, URL и X-User самостоятельно.
+
+### 16. Неизвестный пользователь: ожидается 401.
+GET {{baseUrl}}/issues
+X-User: unknown-user
+
+### 17. Нет учебной личности: ожидается 401.
+GET {{baseUrl}}/issues
+
+### 18. Резерв: сравните ответы подсказки о существовании чужого и отсутствующего объекта.
+GET {{baseUrl}}/issues/4/exists
+X-User: alice
+
+### 19. Несуществующий объект для сравнения с запросом 18.
+GET {{baseUrl}}/issues/999/exists
+X-User: alice
